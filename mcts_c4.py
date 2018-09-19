@@ -24,7 +24,7 @@ def color_board(i, x, y, winner_pos, color):
     if (x, y) in winner_pos:
         return color + str(int(i)) + COLOR.END
     else:
-        return str(int(i))
+        return str(int(i)) if i != 0 else '.'
 
 
 def display_board(state, pos, color):
@@ -146,7 +146,6 @@ class SearchTree(object):
         assert len(node.unexpanded_actions) > 0
         action, _ = node.unexpanded_actions.popitem()
         new_state = self.game.next_state(node.state, action)
-        winner, winner_pos = self.game.check(new_state)
         new_rewards = [EPS, EPS, EPS]
         new_state_unexpanded_actions = {a: None for a in self.game.possible_actions(new_state)}
         new_state_expanded_actions = {}
@@ -227,10 +226,31 @@ class Game(object):
         i += 1
         return r, c + i
 
+    def __lefttop_shift(self, state):
+        r, c = state.position
+        i = 0
+        while 0 <= c + i and 0 <= r + i and state.board[r + i, c + i] == state.board[r, c]:
+            i -= 1
+        i += 1
+        return r + i, c + i
+
+    def __righttop_shift(self, state):
+        r, c = state.position
+        i = 0
+        j = 0
+        while c + i <= 6 and 0 <= r + j and state.board[r + j, c + i] == state.board[r, c]:
+            i += 1
+            j -= 1
+        j += 1
+        i -= 1
+        return r + j, c + i
+
     def check(self, state):
-        for vec_idx, vec in enumerate([Game.right, Game.down, Game.rightdown, Game.leftdown]):
-            if vec_idx == 0:
-                r, c = self.__left_shift(state)
+        for name, shift, vec in zip(['left', 'down', 'lefttop', 'righttop'],
+                                    [self.__left_shift, None, self.__lefttop_shift, self.__righttop_shift],
+                                    [Game.right, Game.down, Game.rightdown, Game.leftdown]):
+            if shift is not None:
+                r, c = shift(state)
             else:
                 r, c = state.position
 
@@ -282,6 +302,7 @@ if __name__ == '__main__':
     while len(game.possible_actions(state)) > 0 and winner == 0:
         print(display_board(state, set([state.position]), COLOR.CYAN))
         print('player' + str(3 - state.player) + ':')
+        #h = int(input('human(0) or mcts(1)?'))
         if 3 - state.player == 1:
             action_map = {idx: i for idx, i in enumerate(game.possible_actions(state))}
             i = input('select action ' + ' '.join([str(idx) + ':' + str(i) for idx, i in action_map.items()]) + ':')
