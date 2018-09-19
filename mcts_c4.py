@@ -302,14 +302,13 @@ if __name__ == '__main__':
     while len(game.possible_actions(state)) > 0 and winner == 0:
         print(display_board(state, set([state.position]), COLOR.CYAN))
         print('player' + str(3 - state.player) + ':')
-        #h = int(input('human(0) or mcts(1)?'))
         if 3 - state.player == 1:
-            action_map = {idx: i for idx, i in enumerate(game.possible_actions(state))}
-            i = input('select action ' + ' '.join([str(idx) + ':' + str(i) for idx, i in action_map.items()]) + ':')
+            action_map = {i[1]: i for i in game.possible_actions(state)}
+            i = input('select action: ' + ','.join([str(k) for k, v in action_map.items()]) + ':')
             selected_action = action_map[int(i)]
         else:
             selected_action = mcts_search(state, game)
         state = game.next_state(state, selected_action)
         winner, winner_pos = game.check(state)
-    print('game over!')
     print(display_board(state, set(winner_pos), COLOR.GREEN))
+    print('game over!')
