@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 __author__ = 'arenduchintala'
 import numpy as np
 import pdb
@@ -20,11 +21,22 @@ class COLOR:
 EPS = 1e-4
 
 
-def color_board(i, x, y, winner_pos, color):
-    if (x, y) in winner_pos:
-        return color + str(int(i)) + COLOR.END
+def color_board(i, x, y, highlist_pos, color):
+    if (x, y) in highlist_pos:
+        if color is None:
+            s = COLOR.UNDERLINE + str(int(i)) + COLOR.END
+        else:
+            s = color + str(int(i)) + COLOR.END
+
     else:
-        return str(int(i)) if i != 0 else '.'
+        s = str(int(i))
+    if i == 0:
+        s = '.'
+    elif i == 1:
+        s = COLOR.RED + s + COLOR.END
+    else:
+        s = COLOR.YELLOW + s + COLOR.END
+    return s
 
 
 def display_board(state, pos, color):
@@ -79,14 +91,13 @@ class SearchTree(object):
 
     def rollout(self, node):
         state = node.state
-        max_steps = 6 * 7
         steps = 0
         while not state.is_terminal:
             pa = self.game.possible_actions(state)
             selected_action = pa[np.random.choice(len(pa))]
             state = self.game.next_state(state, selected_action)
             steps += 1
-            if steps > max_steps:
+            if steps > game.max_steps:
                 print('exceeded max steps')
                 pdb.set_trace()
         return self.gamma ** steps, state.winner, state.winner_pos
@@ -192,6 +203,7 @@ class Game(object):
 
     def __init__(self, size):
         self.size = size
+        self.max_steps = size[0] * size[1]
 
     def start(self,):
         b = np.zeros(self.size, dtype=int)
@@ -300,11 +312,13 @@ if __name__ == '__main__':
     state = game.start()
     winner = 0
     while len(game.possible_actions(state)) > 0 and winner == 0:
-        print(display_board(state, set([state.position]), COLOR.CYAN))
+        print(display_board(state, set([state.position]), None))
         print('player' + str(3 - state.player) + ':')
         if 3 - state.player == 1:
             action_map = {i[1]: i for i in game.possible_actions(state)}
-            i = input('select action: ' + ','.join([str(k) for k, v in action_map.items()]) + ':')
+            i = -1
+            while i not in action_map:
+                i = input('select action: ' + ','.join([str(k) for k, v in action_map.items()]) + ':')
             selected_action = action_map[int(i)]
         else:
             selected_action = mcts_search(state, game)
