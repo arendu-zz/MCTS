@@ -319,6 +319,7 @@ if __name__ == '__main__':
             i = -1
             while i not in action_map:
                 i = input('select action: ' + ','.join([str(k) for k, v in action_map.items()]) + ':')
+                i = int(i)
             selected_action = action_map[int(i)]
         else:
             selected_action = mcts_search(state, game)
